@@ -1,0 +1,6 @@
+# Secretos y configuración local: nunca al repo
+.env
+*.env
+
+# Escenas del crimen generadas por los casos
+scene/
