@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# SIGNAL 9 · control de turno
+# Verifica los hábitos de trabajo antes de darte el código para avanzar
+# en el cuartel general.
+#
+#   ./signal9 start 001   inicio de turno: pull, entorno limpio, identidad
+#   ./signal9 close 001   cierre: bitácora, commit, push, traspaso, limpieza
+#
+# Nota honesta: este script vive en tu máquina y podrías leer cómo arma los
+# códigos. El candado es para formar el hábito, no para vigilarte.
+set -uo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO" || exit 1
+
+ok()   { printf '  [\033[32m✓\033[0m] %s\n' "$1"; }
+fail() { printf '  [\033[31m✗\033[0m] %s\n' "$1"; FAILED=1; }
+info() { printf '  [i] %s\n' "$1"; }
+
+code_for() {  # code_for <caso> <fase>
+  local h
+  h="$(printf 'signal9|%s|%s|andes-cloud' "$1" "$2" | sha256sum | cut -c1-6)"
+  printf 'S9-%s' "${h^^}"
+}
+
+usage() {
+  echo "Uso: ./signal9 start <caso> | ./signal9 close <caso>   (ej: ./signal9 start 001)"
+  exit 1
+}
+
+CMD="${1:-}"; CASE="${2:-}"
+[[ -z "$CMD" || -z "$CASE" ]] && usage
+[[ "$CASE" =~ ^[0-9]{3}$ ]] || { echo "El caso va con 3 dígitos, ej: 001"; exit 1; }
+CASE_DIR="$(find cases -maxdepth 1 -type d -name "$CASE-*" 2>/dev/null | head -1)"
+[[ -n "$CASE_DIR" ]] || { echo "No existe la carpeta del caso $CASE en cases/"; exit 1; }
+FAILED=0
+
+case "$CMD" in
+start)
+  echo "== Inicio de turno · caso $CASE =="
+  echo "  ¿Dónde estoy?  host=$(hostname)  usuario=$(whoami)  carpeta=$(pwd)"
+  if [[ "$(id -u)" -ne 0 ]]; then ok "No estás como root"; else fail "Estás como root: salí y entrá con tu usuario"; fi
+
+  if gh auth status >/dev/null 2>&1; then ok "gh autenticado"; else fail "gh no autenticado → corré: gh auth login"; fi
+
+  if [[ -n "$(git status --porcelain)" ]]; then
+    fail "Hay cambios sin commitear → revisalos con: git status"
+  else
+    ok "Working tree limpio"
+  fi
+
+  if [[ "$FAILED" -eq 0 ]]; then
+    if git pull --ff-only --quiet; then ok "git pull: estás al día con GitHub"
+    else fail "git pull falló → leé el error de arriba antes de seguir"; fi
+  fi
+
+  echo
+  if [[ "$FAILED" -eq 0 ]]; then
+    echo "  Código de inicio de turno: $(code_for "$CASE" start)"
+    echo "  Ingresalo en el cuartel general."
+  else
+    echo "  Turno NO iniciado. Corregí lo marcado con ✗ y volvé a correr: ./signal9 start $CASE"
+    exit 1
+  fi
+  ;;
+
+close)
+  echo "== Cierre de turno · caso $CASE =="
+
+  # 1. Limpieza de la escena
+  if [[ -d scene ]] || pgrep -u "$(id -u)" -f '^kworker-sync( |$)' >/dev/null; then
+    fail "La escena sigue armada → corré: ./$CASE_DIR/cleanup.sh"
+  else
+    ok "Escena limpia"
+  fi
+
+  # 2. Bitácora con sus secciones
+  LOG="$(find casebook -maxdepth 1 -type f -name "$CASE-*.md" 2>/dev/null | head -1)"
+  if [[ -z "$LOG" ]]; then
+    fail "Falta la bitácora → creá casebook/$CASE-<nombre>.md"
+  else
+    missing=()
+    for s in "lo que hice" "lo que aprend" "errores" "pendiente"; do
+      grep -qiE "^## +$s" "$LOG" || missing+=("$s")
+    done
+    if (( ${#missing[@]} )); then
+      fail "A $LOG le faltan secciones '## ...': ${missing[*]}"
+    else
+      ok "Bitácora completa: $LOG"
+    fi
+  fi
+
+  # 3. Commit y push
+  if [[ -n "$(git status --porcelain)" ]]; then
+    fail "Cambios sin commitear → git add <archivo> && git commit -m \"...\""
+  else
+    ok "Todo commiteado"
+  fi
+  git fetch --quiet 2>/dev/null
+  BR="$(git rev-parse --abbrev-ref HEAD)"
+  if ! git rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+    fail "La rama $BR no está publicada → git push -u origin $BR"
+  else
+    ahead="$(git rev-list --count '@{u}..HEAD')"
+    if [[ "$ahead" -gt 0 ]]; then fail "$ahead commit(s) sin push → git push"
+    else ok "Todo pusheado a GitHub"; fi
+  fi
+
+  # 4. Comentario de traspaso en el issue del caso, de las últimas 24 h
+  ME="$(gh api user --jq .login 2>/dev/null)"
+  ISSUE="$(gh issue list --state all --search "Caso $CASE in:title" --json number --jq '.[0].number' 2>/dev/null)"
+  if [[ -z "$ISSUE" ]]; then
+    fail "No encontré un issue con 'Caso $CASE' en el título → creálo: gh issue create"
+  else
+    SINCE="$(date -u -d '24 hours ago' +%FT%TZ)"
+    n="$(gh issue view "$ISSUE" --json comments \
+         --jq "[.comments[] | select(.author.login==\"$ME\" and .createdAt >= \"$SINCE\")] | length" 2>/dev/null)"
+    if [[ "${n:-0}" -gt 0 ]]; then ok "Comentario de traspaso en el issue #$ISSUE"
+    else fail "Sin comentario en las últimas 24 h en el issue #$ISSUE → gh issue comment $ISSUE --body \"...\""; fi
+  fi
+
+  echo
+  if [[ "$FAILED" -eq 0 ]]; then
+    echo "  Código de cierre: $(code_for "$CASE" close)"
+    echo "  Ingresalo en el cuartel general para cerrar el caso."
+  else
+    echo "  Turno NO cerrado. Corregí lo marcado con ✗ y volvé a correr: ./signal9 close $CASE"
+    exit 1
+  fi
+  ;;
+
+*) usage ;;
+esac

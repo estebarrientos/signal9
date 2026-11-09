@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIGNAL 9 · Cuartel general</title>
+<style>
+:root{
+  --bg:#0b1118; --panel:#111a24; --panel2:#16212e; --line:#24364a;
+  --text:#dfe8f1; --muted:#8aa0b6; --dim:#5d7287;
+  --amber:#f2b33d; --teal:#2fc4a0; --red:#ff6b6b; --blue:#6fb2ff;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--sans)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue)}
+code,kbd,.mono{font-family:var(--mono);font-size:.92em}
+code{background:#0a0f15;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--line);background:#0d151e;position:sticky;top:0;z-index:5}
+.brand{font-family:var(--mono);font-weight:700;letter-spacing:.12em}
+.brand span{color:var(--amber)}
+.case-tag{color:var(--muted);font-size:13px}
+.spacer{flex:1}
+.clock{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--amber)}
+.clock.low{color:var(--red)}
+.rank{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--teal)}
+main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;padding:16px 20px;max-width:1400px;margin:0 auto}
+@media (max-width:900px){main{grid-template-columns:1fr;padding:12px 16px}header{padding:10px 16px}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.panel h2{margin:0 0 10px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.panel h3{margin:4px 0 8px;font-size:18px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#1a1205;font-weight:600}
+.btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:var(--red);color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=text],textarea,select{background:#0a0f15;border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:84px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--blue);outline-offset:1px}
+.terminal{background:#070b10;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:13px}
+.terminal .prompt{color:var(--teal)}
+.ticket{border-left:3px solid var(--amber);padding:8px 12px;background:var(--panel2);border-radius:0 8px 8px 0}
+.note{border-left:3px solid var(--teal);padding:8px 12px;background:rgba(47,196,160,.07);border-radius:0 8px 8px 0}
+.alert{border-left:3px solid var(--red);padding:8px 12px;background:rgba(255,107,107,.08);border-radius:0 8px 8px 0}
+.quote{font-style:italic;color:var(--amber);margin:6px 0}
+.opt{display:block;width:100%;text-align:left;margin:6px 0;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer}
+.opt:hover{border-color:var(--blue)}
+.opt.right{border-color:var(--teal);background:rgba(47,196,160,.12)}
+.opt.wrong{border-color:var(--red);background:rgba(255,107,107,.10)}
+.opt:disabled{cursor:default}
+.lights{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.lights li{display:flex;gap:10px;align-items:center;font-size:14px}
+.dot{width:11px;height:11px;border-radius:50%;background:#2a3a4c;flex:none;box-shadow:inset 0 0 0 1px #3a4f66}
+.dot.on{background:var(--teal);box-shadow:0 0 8px rgba(47,196,160,.7)}
+.dot.half{background:var(--amber);box-shadow:0 0 8px rgba(242,179,61,.6)}
+.suspects{display:grid;gap:8px}
+.suspect{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel2)}
+.suspect.out{opacity:.35}
+.suspect.match{border-color:var(--amber)}
+.suspect .name{font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--muted)}
+.chip.hit{border-color:var(--teal);color:var(--teal)}
+.warrant{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:480px){.warrant{grid-template-columns:1fr}}
+.warrant label{font-size:12px;color:var(--muted)}
+.log{max-height:240px;overflow:auto;font-family:var(--mono);font-size:12.5px}
+.log div{padding:3px 0;border-bottom:1px dashed #1e2c3b}
+.log .t{color:var(--amber);margin-right:8px}
+.map svg{width:100%;height:auto;display:block;border-radius:8px;background:#0a121b}
+.map .land{fill:#15222f;stroke:#22374b;stroke-width:1}
+.map .grid{stroke:#14202c;stroke-width:1}
+.map .route{stroke:var(--teal);stroke-width:2;fill:none}
+.map .lbl{font:12px var(--sans);fill:var(--muted)}
+.map .lbl.cur{fill:var(--amber);font-weight:600}
+.map .lbl.opt{fill:var(--text)}
+@keyframes pulse{0%{r:7;opacity:1}100%{r:20;opacity:0}}
+.map .pulse{fill:none;stroke:var(--amber);stroke-width:2;animation:pulse 1.6s ease-out infinite}
+.region-card{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.region-card b{color:var(--text)}
+.stagebar{display:flex;gap:6px;margin-bottom:10px}
+.stagebar span{flex:1;height:5px;border-radius:3px;background:#22313f}
+.stagebar span.done{background:var(--teal)}
+.stagebar span.cur{background:var(--amber)}
+.yn{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.yn .row{flex-wrap:nowrap}
+.yn .btn{padding:5px 12px}
+.yn .btn.sel{border-color:var(--amber);color:var(--amber)}
+.yn .res-ok{color:var(--teal)} .yn .res-bad{color:var(--red)}
+details summary{cursor:pointer;color:var(--muted)}
+footer{max-width:1400px;margin:0 auto;padding:0 20px 30px;color:var(--dim);font-size:12px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal .panel{max-width:640px;width:100%;max-height:90vh;overflow:auto}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">SIGNAL<span>·</span>9</div>
+  <div class="case-tag" id="caseTag"></div>
+  <div class="spacer"></div>
+  <div class="rank" id="rank">Rango: Novato</div>
+  <div class="clock" id="clock" title="Horas de juego restantes">--</div>
+</header>
+
+<main>
+  <div class="col">
+    <section class="panel" id="stage" aria-live="polite"></section>
+    <section class="panel map" aria-label="Mapa de regiones">
+      <h2>Mapa de regiones de Azure</h2>
+      <div id="map"></div>
+      <div class="region-card" id="regionCard"></div>
+    </section>
+    <section class="panel">
+      <h2>Bitácora del caso</h2>
+      <div class="log" id="log"></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <section class="panel">
+      <h2>Panel de turno</h2>
+      <ul class="lights" id="lights"></ul>
+      <p class="small muted" style="margin:10px 0 0">Si cortás a mitad del caso: anotá en la bitácora, <code>commit</code>, <code>push</code> y un comentario en el issue. Nadie se va sin dejar traspaso.</p>
+    </section>
+    <section class="panel">
+      <h2>Expediente de la banda · mundo Linux</h2>
+      <div id="clues"></div>
+      <div class="suspects" id="suspects"></div>
+    </section>
+    <section class="panel">
+      <h2>Orden de captura</h2>
+      <div class="warrant" id="warrant"></div>
+      <div id="warrantStatus" class="small" style="margin-top:10px"></div>
+    </section>
+    <section class="panel">
+      <h2>Sala de revancha</h2>
+      <div id="revancha"></div>
+    </section>
+    <section class="panel">
+      <h2>Progreso</h2>
+      <p class="small muted" style="margin-top:0">Se guarda en este navegador. Exportalo y guardalo en el repo (<code>progress/</code>) al cerrar cada caso, así también vive en git.</p>
+      <div class="row">
+        <button class="btn" id="exportBtn">Exportar progreso</button>
+        <label class="btn">Importar<input type="file" id="importFile" accept="application/json" class="hidden"></label>
+        <button class="btn ghost danger" id="resetBtn">Reiniciar caso</button>
+      </div>
+    </section>
+  </div>
+</main>
+<footer>SIGNAL 9 · juego de aprendizaje personal. Datos, clientes y personajes ficticios. Las IPs usan rangos de documentación (RFC 5737).</footer>
+
+<div class="modal hidden" id="modal"><div class="panel" id="modalBody"></div></div>
+
+<script src="cases/case001.js"></script>
+<script>
+"use strict";
+/* ============ Datos fijos del juego ============ */
+const REGIONS = {
+  brazilsouth:  {name:"Brazil South",   place:"Estado de São Paulo, Brasil", lat:-23.5, lon:-46.6, pair:"South Central US (Texas): uno de los pocos pares en otro continente", dx:10, dy:4},
+  eastus:       {name:"East US",        place:"Virginia, EE. UU.",           lat:37.4,  lon:-79.4, pair:"West US (California)", dx:10, dy:4},
+  centralus:    {name:"Central US",     place:"Iowa, EE. UU.",               lat:41.6,  lon:-93.6, pair:"East US 2 (Virginia)", dx:-80, dy:-8},
+  uksouth:      {name:"UK South",       place:"Londres, Reino Unido",        lat:51.5,  lon:-0.1,  pair:"UK West (Cardiff)", dx:-14, dy:22},
+  northeurope:  {name:"North Europe",   place:"Irlanda",                     lat:53.3,  lon:-6.3,  pair:"West Europe (Países Bajos)", dx:-92, dy:-6},
+  westeurope:   {name:"West Europe",    place:"Países Bajos",                lat:52.4,  lon:4.9,   pair:"North Europe (Irlanda)", dx:10, dy:-8},
+  southeastasia:{name:"Southeast Asia", place:"Singapur",                    lat:1.3,   lon:103.8, pair:"East Asia (Hong Kong)", dx:10, dy:4},
+  japaneast:    {name:"Japan East",     place:"Tokio y Saitama, Japón",      lat:35.7,  lon:139.7, pair:"Japan West (Osaka)", dx:10, dy:-6},
+  japanwest:    {name:"Japan West",     place:"Osaka, Japón",                lat:34.7,  lon:135.5, pair:"Japan East (Tokio)", dx:-84, dy:16},
+};
+const DIMS = {
+  escondite:{label:"Escondite", values:{dotfile:"Archivo oculto (dotfile)", nombre_sistema:"Nombre falso de sistema", tar:"Dentro de un .tar", tmp:"En /tmp"}},
+  horario:  {label:"Horario",   values:{madrugada:"Madrugada", mediodia:"Mediodía", noche:"Noche"}},
+  editor:   {label:"Editor",    values:{vim:"vim", nano:"nano", sed:"Solo sed"}},
+  firma:    {label:"Firma",     values:{iniciales:"Iniciales en comentarios", proceso_disfrazado:"Proceso disfrazado", puerto4444:"Puerto 4444", typo:"Typo fijo"}},
+};
+const GANG = [
+  {id:"lola",   name:"Lola “Dotfile” Ferreyra",   spec:"Esconde lo robado en archivos ocultos.",        t:{escondite:"dotfile",horario:"madrugada",editor:"vim",firma:"proceso_disfrazado"}},
+  {id:"nadia",  name:"Nadia “4444” Vidal",        spec:"Túneles SSH y puertos raros.",                  t:{escondite:"dotfile",horario:"madrugada",editor:"vim",firma:"puerto4444"}},
+  {id:"ramiro", name:"Ramiro “Cron” Quiroga",     spec:"Persistencia con cron y systemd timers.",      t:{escondite:"nombre_sistema",horario:"madrugada",editor:"nano",firma:"iniciales"}},
+  {id:"tito",   name:"Tito “Setuid” Arancibia",   spec:"Escala privilegios con sudo y setuid.",         t:{escondite:"dotfile",horario:"mediodia",editor:"vim",firma:"iniciales"}},
+  {id:"sosa",   name:"“La Inodo” Sosa",           spec:"Llena discos hasta voltear servidores.",        t:{escondite:"tmp",horario:"noche",editor:"sed",firma:"typo"}},
+];
+const COST = {travelOk:4, travelBad:8, hint:2, badKey:1, badWitness:3};
+const CASE = window.SIGNAL9_CASES["001"];
+const KEY = "signal9.v1";
+
+/* ============ SHA-256 (con respaldo en JS si crypto.subtle no está) ============ */
+function sha256js(bytes){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const l=bytes.length, nb=((l+9+63)>>6)<<6, m=new Uint8Array(nb);
+  m.set(bytes); m[l]=0x80;
+  const bits=l*8; for(let i=0;i<8;i++) m[nb-1-i]=Math.floor(bits/Math.pow(2,8*i))&255;
+  const w=new Uint32Array(64), r=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let o=0;o<nb;o+=64){
+    for(let i=0;i<16;i++) w[i]=(m[o+4*i]<<24)|(m[o+4*i+1]<<16)|(m[o+4*i+2]<<8)|m[o+4*i+3];
+    for(let i=16;i<64;i++){const s0=r(w[i-15],7)^r(w[i-15],18)^(w[i-15]>>>3), s1=r(w[i-2],17)^r(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)|0;}
+    let [a,b,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){
+      const S1=r(e,6)^r(e,11)^r(e,25), ch=(e&f)^(~e&g), t1=(h+S1+ch+K[i]+w[i])|0;
+      const S0=r(a,2)^r(a,13)^r(a,22), mj=(a&b)^(a&c)^(b&c), t2=(S0+mj)|0;
+      h=g; g=f; f=e; e=(d+t1)|0; d=c; c=b; b=a; a=(t1+t2)|0;
+    }
+    H=[H[0]+a,H[1]+b,H[2]+c,H[3]+d,H[4]+e,H[5]+f,H[6]+g,H[7]+h].map(x=>x|0);
+  }
+  return H.map(x=>(x>>>0).toString(16).padStart(8,"0")).join("");
+}
+async function sha256(text){
+  const bytes=new TextEncoder().encode(text);
+  try{
+    if(window.crypto && crypto.subtle){
+      const buf=await crypto.subtle.digest("SHA-256",bytes);
+      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+    }
+  }catch(e){/* file:// en algunos navegadores: usamos el respaldo */}
+  return sha256js(bytes);
+}
+const norm = s => String(s||"").trim().toLowerCase();
+
+/* ============ Estado ============ */
+function freshCase(){
+  return {status:"locked", hours:CASE.hours, at:0, phase:"mission", hints:{}, traits:{}, witness:{},
+          warrant:null, hypothesis:"", interview:{}, finale:null, wrong:{keys:0,travel:0,witness:0}, events:[]};
+}
+function load(){
+  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s && s.v===1) return s; }catch(e){}
+  return {v:1, cases:{"001":freshCase()}, revancha:[], closed:["000"]};
+}
+let S = load();
+let C = S.cases["001"] || (S.cases["001"]=freshCase());
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+function ev(msg){ C.events.unshift({t:C.hours, msg}); }
+function spend(h, why){
+  C.hours = Math.max(0, C.hours - h);
+  ev(`−${h} h · ${why}`);
+  if(C.hours<=0 && !["captured","interview","closing","closed"].includes(C.status)){
+    C.status="escaped"; ev("Se acabó el tiempo. El sospechoso se escapó con el backup.");
+  }
+}
+function addRevancha(qid){ if(!S.revancha.includes(qid)) S.revancha.push(qid); }
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = id => document.getElementById(id);
+const dest = () => CASE.destinations[C.at];
+
+/* ============ Mapa ============ */
+const LAND = [
+  [[-168,65],[-140,70],[-95,72],[-80,62],[-60,50],[-70,42],[-75,35],[-81,25],[-97,26],[-105,20],[-90,15],[-83,9],[-110,23],[-117,32],[-125,40],[-125,50],[-140,60]],
+  [[-80,10],[-60,10],[-50,0],[-35,-7],[-40,-22],[-58,-38],[-68,-55],[-75,-45],[-71,-18],[-81,-5]],
+  [[-10,36],[-9,44],[-2,48],[3,51],[8,55],[5,62],[15,70],[30,70],[40,65],[40,45],[28,41],[20,40],[10,44],[3,43]],
+  [[-6,50],[1,51],[-2,56],[-5,58],[-6,55],[-10,52]],
+  [[-17,21],[-10,35],[10,37],[32,31],[43,12],[51,12],[40,-15],[35,-25],[20,-35],[12,-17],[9,4],[-8,5],[-17,14]],
+  [[40,45],[40,65],[60,72],[100,78],[140,72],[180,68],[170,60],[140,52],[130,42],[122,30],[120,22],[108,18],[105,10],[100,2],[98,15],[92,22],[80,8],[73,20],[66,25],[57,25],[50,30],[36,36],[28,41]],
+  [[130,31],[135,34],[140,36],[142,41],[141,45],[139,40],[135,35],[130,33]],
+  [[114,-22],[130,-12],[142,-11],[153,-27],[146,-39],[135,-35],[115,-34]],
+];
+const W=1000, Hh=430, LAT0=80, LAT1=-60;
+const px = lon => (lon+180)/360*W;
+const py = lat => (LAT0-lat)/(LAT0-LAT1)*Hh;
+
+function travelOptions(){
+  if(C.status!=="investigating" || C.phase!=="travel") return [];
+  return dest().travel.options;
+}
+function visitedRegions(){ return CASE.destinations.slice(0, C.at+1).map(d=>d.region); }
+
+function renderMap(){
+  const opts = travelOptions();
+  const visited = C.status==="locked" ? [] : visitedRegions();
+  const cur = C.status==="locked" ? null : dest().region;
+  let g = "";
+  for(let lon=-180; lon<=180; lon+=30) g+=`<line class="grid" x1="${px(lon)}" y1="0" x2="${px(lon)}" y2="${Hh}"/>`;
+  for(let lat=-60; lat<=80; lat+=20) g+=`<line class="grid" x1="0" y1="${py(lat)}" x2="${W}" y2="${py(lat)}"/>`;
+  const land = LAND.map(p=>`<polygon class="land" points="${p.map(([lo,la])=>px(lo)+","+py(la)).join(" ")}"/>`).join("");
+  const route = visited.length>1 ? `<polyline class="route" points="${visited.map(r=>px(REGIONS[r].lon)+","+py(REGIONS[r].lat)).join(" ")}"/>` : "";
+  const show = new Set([...visited, ...opts]);
+  let regs="";
+  for(const id of Object.keys(REGIONS)){
+    const R=REGIONS[id], x=px(R.lon), y=py(R.lat);
+    const isCur=id===cur, isOpt=opts.includes(id), isVis=visited.includes(id);
+    const fill = isCur ? "var(--amber)" : isVis ? "var(--teal)" : isOpt ? "var(--blue)" : "#3a5068";
+    const lbl = show.has(id) ? `<text class="lbl ${isCur?"cur":isOpt?"opt":""}" x="${x+R.dx}" y="${y+R.dy}">${esc(R.name)}</text>` : "";
+    regs += `<g class="reg" data-region="${id}">
+      ${isCur?`<circle class="pulse" cx="${x}" cy="${y}" r="7"/>`:""}
+      ${isOpt?`<circle cx="${x}" cy="${y}" r="11" fill="none" stroke="var(--blue)" stroke-dasharray="3 3"/>`:""}
+      <circle cx="${x}" cy="${y}" r="${isCur||isOpt?6:4}" fill="${fill}"/>${lbl}</g>`;
+  }
+  $("map").innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Mapa con las regiones de Azure y la ruta del sospechoso">${g}${land}${route}${regs}</svg>`;
+  const R = cur ? REGIONS[cur] : null;
+  $("regionCard").innerHTML = R
+    ? `<span>Estás en <b>${esc(R.name)}</b> · ${esc(R.place)}</span><span>Par de región: <b>${esc(R.pair)}</b></span>`
+    : `<span>Iniciá el turno para desplegarte.</span>`;
+}
+
+/* ============ Escenario principal ============ */
+function stagebar(){
+  return `<div class="stagebar">${CASE.destinations.map((d,i)=>`<span class="${i<C.at||(i===C.at&&["captured","interview","closing","closed"].includes(C.status))?"done":i===C.at?"cur":""}"></span>`).join("")}</div>`;
+}
+function question(q, onDone, state){
+  // state: respuesta guardada (para volver a mostrar el resultado)
+  if(q.type==="single"){
+    const ans = state;
+    const opts = q.options.map((o,i)=>{
+      let cls="opt"; if(ans!=null){ if(i===q.answer) cls+=" right"; else if(i===ans) cls+=" wrong"; }
+      return `<button class="${cls}" data-i="${i}" ${ans!=null?"disabled":""}>${String.fromCharCode(65+i)}. ${esc(o)}</button>`;
+    }).join("");
+    return {html:`${q.intro?`<p class="muted" style="margin:0">${esc(q.intro)}</p>`:""}${q.quote?`<p class="quote">${esc(q.quote)}</p>`:""}
+      <p><b>${esc(q.q)}</b></p><div data-q>${opts}</div>
+      ${ans!=null?`<div class="${ans===q.answer?"note":"alert"}" style="margin-top:8px"><b>${ans===q.answer?"Correcto.":"Era una mentira a medias."}</b> ${esc(q.explain)}</div>`:""}`,
+      bind(root){ root.querySelectorAll("[data-q] .opt").forEach(b=>b.onclick=()=>onDone(Number(b.dataset.i), Number(b.dataset.i)===q.answer)); }};
+  }
+  // yesno
+  const sel = state && state.sel ? state.sel : q.statements.map(()=>null);
+  const done = state && state.done;
+  const rows = q.statements.map((st,i)=>{
+    const r = done ? (sel[i]===st.a ? `<span class="res-ok">✓</span>` : `<span class="res-bad">✗ (${st.a?"Sí":"No"})</span>`) : "";
+    return `<div class="yn"><div>${esc(st.s)} ${r}</div><div class="row">
+      <button class="btn ${sel[i]===true?"sel":""}" data-i="${i}" data-v="1" ${done?"disabled":""}>Sí</button>
+      <button class="btn ${sel[i]===false?"sel":""}" data-i="${i}" data-v="0" ${done?"disabled":""}>No</button></div></div>`;
+  }).join("");
+  const allOk = done && q.statements.every((st,i)=>sel[i]===st.a);
+  return {html:`${q.intro?`<p class="muted" style="margin:0">${esc(q.intro)}</p>`:""}<p><b>${esc(q.q)}</b></p>${rows}
+    ${done?`<div class="${allOk?"note":"alert"}" style="margin-top:8px"><b>${allOk?"Impecable.":"Te hizo dudar."}</b> ${esc(q.explain)}</div>`
+          :`<div class="row" style="margin-top:10px"><button class="btn primary" data-yn-submit ${sel.includes(null)?"disabled":""}>Responder</button></div>`}`,
+    bind(root){
+      root.querySelectorAll(".yn .btn").forEach(b=>b.onclick=()=>{ sel[Number(b.dataset.i)] = b.dataset.v==="1"; onDone({sel,done:false}, null); });
+      const sb=root.querySelector("[data-yn-submit]"); if(sb) sb.onclick=()=>onDone({sel,done:true}, q.statements.every((st,i)=>sel[i]===st.a));
+    }};
+}
+
+function renderStage(){
+  const el=$("stage"); let html=""; let binder=null;
+  const st=C.status;
+
+  if(st==="locked"){
+    html=`<h2>Ticket ${esc(CASE.ticket)} · ${esc(CASE.client)}</h2><h3>${esc(CASE.title)}</h3>
+      <div class="ticket">${esc(CASE.crime)}</div>
+      <p>Antes de investigar, iniciá el turno en la Aurora:</p>
+      <div class="terminal"><span class="prompt">$</span> cd ~/signal9 &amp;&amp; ./signal9 start ${CASE.id}</div>
+      <p class="small muted">El script verifica que estés al día con GitHub, que no tengas cambios colgados y que no seas root. Si todo está bien, te da un código.</p>
+      <div class="row"><input type="text" id="code" placeholder="Código de inicio (S9-XXXXXX)" autocomplete="off" style="max-width:260px">
+      <button class="btn primary" id="codeBtn">Iniciar turno</button></div><div id="codeMsg" class="small" style="margin-top:8px"></div>`;
+    binder=()=>{ const f=async()=>{ if(await sha256(norm($("code").value))===CASE.startHash){ C.status="briefing"; ev("Turno iniciado. Código verificado."); commit(); } else { $("codeMsg").innerHTML=`<span style="color:var(--red)">Código inválido. Corré <code>./signal9 start ${CASE.id}</code> y copiá el código tal cual.</span>`; } };
+      $("codeBtn").onclick=f; $("code").onkeydown=e=>{ if(e.key==="Enter") f(); }; };
+  }
+  else if(st==="briefing"){
+    html=`<h2>Briefing</h2><h3>${esc(CASE.title)}</h3><div class="ticket">${esc(CASE.crime)}</div>
+      <p><b>Paso 1 del protocolo: hipótesis.</b> Antes de tocar nada, escribí qué creés que pasó y qué vas a buscar primero. No importa si después resulta incorrecta: lo importante es tener una.</p>
+      <textarea id="hyp" placeholder="Creo que...">${esc(C.hypothesis)}</textarea>
+      <p class="small muted">Después plantá la escena (leé el script antes de correrlo: nunca se ejecuta algo sin leerlo):</p>
+      <div class="terminal"><span class="prompt">$</span> less ${esc(CASE.folder)}/setup.sh<br><span class="prompt">$</span> ./${esc(CASE.folder)}/setup.sh</div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="hypBtn">Registrar hipótesis y desplegarme</button><span id="hypMsg" class="small"></span></div>`;
+    binder=()=>{ $("hypBtn").onclick=()=>{ const v=$("hyp").value.trim(); if(v.length<20){ $("hypMsg").innerHTML=`<span style="color:var(--red)">Escribí al menos una oración completa.</span>`; return; }
+      C.hypothesis=v; C.status="investigating"; C.phase="mission"; ev("Hipótesis registrada. Desplegado en "+REGIONS[dest().region].name+"."); commit(); }; };
+  }
+  else if(st==="investigating"){
+    const d=dest(), R=REGIONS[d.region], used=C.hints[d.id]||0;
+    html = stagebar() + `<h2>Destino ${C.at+1} de ${CASE.destinations.length} · ${esc(R.name)} · ${esc(d.server)}</h2>
+      <p class="muted" style="margin-top:0">${esc(d.arrival)}</p>`;
+    if(C.phase==="mission"){
+      html+=`<div class="ticket"><b>Misión:</b> ${esc(d.mission)}</div>
+        ${used?`<div class="note" style="margin-top:8px">${d.hints.slice(0,used).map(h=>`• ${esc(h)}`).join("<br>")}</div>`:""}
+        <div class="row" style="margin-top:10px"><input type="text" id="key" placeholder="Lo que encontraste con tus comandos" autocomplete="off">
+        <button class="btn primary" id="keyBtn">Presentar evidencia</button>
+        ${used<d.hints.length?`<button class="btn ghost" id="hintBtn">Pedir pista (−${COST.hint} h)</button>`:""}</div>
+        <div id="keyMsg" class="small" style="margin-top:8px"></div>`;
+      binder=()=>{
+        const f=async()=>{ const v=norm($("key").value); if(!v) return;
+          if(await sha256(v)===d.keyHash){ C.traits[d.trait.dim]={value:d.trait.value, why:d.trait.why}; C.phase="solved"; ev(`Evidencia confirmada en ${d.server}: ${v}`); commit(); }
+          else { C.wrong.keys++; spend(COST.badKey,"evidencia que no se sostiene"); commit(); setTimeout(()=>{ const m=$("keyMsg"); if(m) m.innerHTML=`<span style="color:var(--red)">No coincide con la evidencia. Revisá qué te pide la misión: nombre exacto, sin espacios.</span>`; },0); } };
+        $("keyBtn").onclick=f; $("key").onkeydown=e=>{ if(e.key==="Enter") f(); };
+        const hb=$("hintBtn"); if(hb) hb.onclick=()=>{ C.hints[d.id]=used+1; spend(COST.hint,"pista pedida"); commit(); };
+      };
+    }
+    else if(C.phase==="solved"){
+      html+=`<div class="note"><b>Evidencia confirmada.</b> ${esc(d.solved)}</div>
+        <div class="ticket" style="margin-top:8px"><b>Rasgo del sospechoso:</b> ${esc(DIMS[d.trait.dim].label)} → ${esc(DIMS[d.trait.dim].values[d.trait.value])}<br><span class="small muted">${esc(d.trait.why)} Usalo en la orden de captura.</span></div>
+        <div class="row" style="margin-top:10px"><button class="btn primary" id="witBtn">Hablar con el testigo</button></div>`;
+      binder=()=>{ $("witBtn").onclick=()=>{ C.phase="witness"; commit(); }; };
+    }
+    else if(C.phase==="witness"){
+      const q=d.witness, prev=C.witness[q.id];
+      const Q=question(q,(i,ok)=>{ C.witness[q.id]=i; if(ok) ev("Testigo desenmascarado."); else { C.wrong.witness++; addRevancha(q.id); spend(COST.badWitness,"te creíste la mentira del testigo"); } commit(); }, prev);
+      html+=Q.html + (prev!=null?`<div class="row" style="margin-top:10px"><button class="btn primary" id="nextBtn">${d.travel?"Planear el viaje":"Ir al arresto"}</button></div>`:"");
+      binder=()=>{ Q.bind($("stage")); const nb=$("nextBtn"); if(nb) nb.onclick=()=>{ if(d.travel){ C.phase="travel"; } else { C.status="arrest"; } commit(); }; };
+    }
+    else if(C.phase==="travel"){
+      html+=`<p><b>¿Adónde se fue el sospechoso?</b> Las opciones están marcadas en azul en el mapa. Un viaje correcto cuesta ${COST.travelOk} h; uno equivocado, ${COST.travelBad} h.</p>
+        <div class="row">${d.travel.options.map(r=>`<button class="btn" data-go="${r}">${esc(REGIONS[r].name)}</button>`).join("")}</div>
+        <div id="travelMsg" class="small" style="margin-top:8px"></div>`;
+      binder=()=>{ $("stage").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>travel(b.dataset.go)); };
+    }
+  }
+  else if(st==="arrest"){
+    const w=C.warrant;
+    html=stagebar()+`<h2>Arresto · srv-6d2e · Japan East</h2>
+      <p>Encontraste el proceso y el backup. Para detener a alguien necesitás una orden de captura contra la persona correcta.</p>
+      <div class="${w?"note":"alert"}">${w?`Orden emitida contra <b>${esc(GANG.find(g=>g.id===w).name)}</b>.`:"No emitiste ninguna orden de captura. Si avanzás así, se escapa."}</div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="arrBtn">Ejecutar el arresto</button></div>`;
+    binder=()=>{ $("arrBtn").onclick=()=>{ if(C.warrant===CASE.culprit){ C.status="finale"; ev("Arresto ejecutado. Interrogatorio final."); } else { C.status="escaped"; ev(C.warrant?"La orden era contra otra persona. El sospechoso se escapó.":"Llegaste sin orden. El sospechoso se escapó."); } commit(); }; };
+  }
+  else if(st==="finale"){
+    const q=CASE.finale;
+    const Q=question(q,(state,ok)=>{ C.finale=state; if(state.done){ if(!ok) addRevancha(q.id); C.status="captured"; ev(`Caso resuelto: Lola “Dotfile” Ferreyra detenida con ${C.hours} h de margen.`); } commit(); }, C.finale);
+    html=stagebar()+`<h2>Interrogatorio final</h2>`+Q.html;
+    binder=()=>Q.bind($("stage"));
+  }
+  else if(st==="captured" || st==="interview"){
+    const i=C.interview;
+    html=stagebar()+`<h2>Modo entrevista</h2><h3>¡Lola “Dotfile” Ferreyra detenida!</h3>
+      ${C.finale && C.finale.done ? `<details><summary>Ver el interrogatorio final</summary>${question(CASE.finale,()=>{},C.finale).html}</details>` : ""}
+      <p><b>Antes de escribir, explicalo en voz alta en 2 minutos</b>, como si fuera una entrevista: qué pasó, cómo lo encontraste y por qué usaste cada comando. Después escribilo con tus palabras: esto se convierte en tu bitácora del caso.</p>
+      <label class="small muted">Lo que hice: qué pasó y cómo lo resolviste (comandos clave y por qué)</label><textarea id="i1">${esc(i.hice||"")}</textarea>
+      <label class="small muted">Lo que aprendí: 3 cosas que no sabías</label><textarea id="i2">${esc(i.aprendi||"")}</textarea>
+      <label class="small muted">Errores y desvíos: dónde te equivocaste o perdiste tiempo</label><textarea id="i3">${esc(i.errores||"")}</textarea>
+      <label class="small muted">Pendiente: qué no entendiste del todo</label><textarea id="i4">${esc(i.pendiente||"")}</textarea>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="mdBtn">Descargar bitácora (.md)</button><button class="btn" id="cpBtn">Copiar</button><span id="mdMsg" class="small"></span></div>`;
+    binder=()=>{
+      const grab=()=>{ C.interview={hice:$("i1").value, aprendi:$("i2").value, errores:$("i3").value, pendiente:$("i4").value}; save(); };
+      ["i1","i2","i3","i4"].forEach(id=>$(id).oninput=grab);
+      const md=()=>{ grab(); const x=C.interview; return `# Caso ${CASE.id} – ${CASE.title}\n\nTicket ${CASE.ticket} · ${CASE.client} · resuelto con ${C.hours} h de margen\n\n## Hipótesis inicial\n\n${C.hypothesis}\n\n## Lo que hice\n\n${x.hice}\n\n## Lo que aprendí\n\n${x.aprendi}\n\n## Errores y desvíos\n\n${x.errores}\n\n- Datos del juego: ${C.wrong.keys} evidencia(s) equivocada(s), ${C.wrong.travel} viaje(s) errado(s), ${C.wrong.witness} testigo(s) que me engañaron, ${Object.values(C.hints).reduce((a,b)=>a+b,0)} pista(s) pedida(s).\n\n## Pendiente\n\n${x.pendiente}\n`; };
+      const ok=()=>{ const x=C.interview; return [x.hice,x.aprendi,x.errores,x.pendiente].every(v=>v && v.trim().length>=10); };
+      const done=()=>{ if(C.status==="captured"){ C.status="interview"; } C.status="closing"; ev("Entrevista registrada. Falta el cierre de turno."); commit(); };
+      $("mdBtn").onclick=()=>{ if(!ok()){ $("mdMsg").innerHTML=`<span style="color:var(--red)">Completá las 4 secciones con tus palabras.</span>`; return; }
+        const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([md()],{type:"text/markdown"})); a.download=`${CASE.id}-backup-viajero.md`; a.click(); done(); };
+      $("cpBtn").onclick=async()=>{ if(!ok()){ $("mdMsg").innerHTML=`<span style="color:var(--red)">Completá las 4 secciones con tus palabras.</span>`; return; }
+        try{ await navigator.clipboard.writeText(md()); done(); }catch(e){ $("mdMsg").textContent="Tu navegador no deja copiar desde acá: usá Descargar."; } };
+    };
+  }
+  else if(st==="closing"){
+    html=stagebar()+`<h2>Cierre de turno</h2><h3>Último paso: dejar todo en orden</h3>
+      <p>El caso se cierra cuando el trabajo queda registrado y la escena, limpia. En la Aurora:</p>
+      <div class="terminal">
+        <span class="prompt">$</span> ./${esc(CASE.folder)}/cleanup.sh<br>
+        <span class="prompt">$</span> nano casebook/${CASE.id}-backup-viajero.md &nbsp;<span class="muted"># pegá tu bitácora</span><br>
+        <span class="prompt">$</span> git add casebook/${CASE.id}-backup-viajero.md &amp;&amp; git commit -m "docs: add case ${CASE.id} log" &amp;&amp; git push<br>
+        <span class="prompt">$</span> gh issue comment &lt;N&gt; --body "Caso ${CASE.id} resuelto. Pendiente: ..."<br>
+        <span class="prompt">$</span> ./signal9 close ${CASE.id}
+      </div>
+      <p class="small muted">El issue tiene que tener “Caso ${CASE.id}” en el título. <code>./signal9 close</code> verifica: escena limpia, bitácora con sus 4 secciones, todo commiteado, todo pusheado y tu comentario de traspaso de las últimas 24 h.</p>
+      <div class="row"><input type="text" id="code" placeholder="Código de cierre (S9-XXXXXX)" autocomplete="off" style="max-width:260px"><button class="btn primary" id="codeBtn">Cerrar el caso</button></div>
+      <div id="codeMsg" class="small" style="margin-top:8px"></div>`;
+    binder=()=>{ const f=async()=>{ if(await sha256(norm($("code").value))===CASE.closeHash){ C.status="closed"; if(!S.closed.includes(CASE.id)) S.closed.push(CASE.id); ev("Caso cerrado. Turno entregado prolijo."); commit(); } else { $("codeMsg").innerHTML=`<span style="color:var(--red)">Código inválido. Corré <code>./signal9 close ${CASE.id}</code> y resolvé lo que marque con ✗.</span>`; } };
+      $("codeBtn").onclick=f; $("code").onkeydown=e=>{ if(e.key==="Enter") f(); }; };
+  }
+  else if(st==="closed"){
+    html=stagebar()+`<h2>Caso ${esc(CASE.id)} cerrado</h2><h3>Buen trabajo, agente.</h3>
+      <div class="note">Lola “Dotfile” Ferreyra está detenida y el backup volvió a Yerbal Norte S.A. con ${C.hours} h de margen.</div>
+      <p>Antes de irte: <b>Exportar progreso</b>, guardalo en <code>progress/</code> del repo, y commit + push.</p>
+      <p class="muted">El Caso 002 llega cuando tu jefe te lo asigne. Las preguntas que fallaste te esperan en la Sala de revancha.</p>`;
+  }
+  else if(st==="escaped"){
+    html=`<h2>Se escapó</h2><div class="alert">${esc(C.events[0] ? C.events[0].msg : "El sospechoso se escapó.")}</div>
+      <p>Pasa en los mejores equipos. Repasá la bitácora del caso: ¿qué te costó más tiempo? Podés reintentar; la escena sigue armada en la Aurora.</p>
+      <button class="btn primary" id="retryBtn">Reintentar el caso</button>`;
+    binder=()=>{ $("retryBtn").onclick=()=>{ resetCase(true); ev("Reintento del caso (el anterior terminó en fuga)."); commit(); }; };
+  }
+  el.innerHTML=html; if(binder) binder();
+}
+
+function travel(region){
+  if(C.status!=="investigating"||C.phase!=="travel") return;
+  const d=dest();
+  if(region===d.travel.correct){
+    spend(COST.travelOk,`viaje a ${REGIONS[region].name}`);
+    if(C.status==="investigating"){ C.at++; C.phase="mission"; ev(`Llegaste a ${REGIONS[region].name}.`); }
+    commit();
+  } else {
+    C.wrong.travel++;
+    spend(COST.travelBad,`viaje en falso a ${REGIONS[region].name}: el rastro no pasa por ahí`);
+    commit();
+    setTimeout(()=>{ const m=$("travelMsg"); if(m) m.innerHTML=`<span style="color:var(--red)">${esc(REGIONS[region].name)}: sin actividad sospechosa. Volviste a revisar la evidencia del destino anterior.</span>`; },0);
+  }
+}
+
+/* ============ Paneles laterales ============ */
+function renderLights(){
+  const order=["locked","briefing","investigating","arrest","finale","captured","interview","closing","closed"];
+  const reached = s => order.indexOf(C.status) >= order.indexOf(s);
+  const nEv = Object.keys(C.traits).length;
+  const items=[
+    ["Turno iniciado (código verificado)", reached("briefing")?"on":""],
+    ["Hipótesis escrita", reached("investigating")?"on":""],
+    [`Evidencia reunida (${nEv}/${CASE.destinations.length})`, nEv===CASE.destinations.length?"on":nEv?"half":""],
+    ["Orden de captura emitida", C.warrant?"on":""],
+    ["Sospechoso detenido", reached("captured")?"on":""],
+    ["Entrevista y bitácora", reached("closing")?"on":""],
+    ["Cierre: limpieza · commit · push · traspaso", C.status==="closed"?"on":""],
+  ];
+  $("lights").innerHTML=items.map(([t,s])=>`<li><span class="dot ${s}"></span>${esc(t)}</li>`).join("");
+}
+function warrantFilter(){
+  const f={}; for(const k of Object.keys(DIMS)){ const el=document.getElementById("w_"+k); f[k]=el?el.value:""; } return f;
+}
+function matches(f){ return GANG.filter(g=>Object.entries(f).every(([k,v])=>!v||g.t[k]===v)); }
+function renderDossier(){
+  const found=Object.entries(C.traits);
+  $("clues").innerHTML = found.length
+    ? `<div class="small" style="margin-bottom:8px">${found.map(([k,v])=>`<div>🔎 <b>${esc(DIMS[k].label)}:</b> ${esc(DIMS[k].values[v.value])} <span class="muted">— ${esc(v.why)}</span></div>`).join("")}</div>`
+    : `<p class="small muted" style="margin-top:0">Todavía no tenés rasgos del sospechoso. Cada destino resuelto te da uno.</p>`;
+  const f=warrantFilter(), m=matches(f).map(g=>g.id), anyF=Object.values(f).some(Boolean);
+  $("suspects").innerHTML=GANG.map(g=>`<div class="suspect ${anyF&&!m.includes(g.id)?"out":""} ${anyF&&m.includes(g.id)&&m.length===1?"match":""}">
+    <div class="name">${esc(g.name)}</div><div class="small muted">${esc(g.spec)}</div>
+    <div class="chips">${Object.entries(g.t).map(([k,v])=>`<span class="chip ${C.traits[k]&&C.traits[k].value===v?"hit":""}">${esc(DIMS[k].values[v])}</span>`).join("")}</div></div>`).join("");
+}
+function renderWarrant(){
+  const locked = !!C.warrant || ["locked","briefing"].includes(C.status);
+  const prev = C.warrantForm || {};
+  $("warrant").innerHTML=Object.entries(DIMS).map(([k,d])=>`<div><label for="w_${k}">${esc(d.label)}</label>
+    <select id="w_${k}" ${locked?"disabled":""}><option value="">— sin dato —</option>${Object.entries(d.values).map(([v,l])=>`<option value="${v}" ${prev[k]===v?"selected":""}>${esc(l)}</option>`).join("")}</select></div>`).join("");
+  const upd=()=>{
+    C.warrantForm=warrantFilter(); save(); renderDossier();
+    const m=matches(C.warrantForm);
+    if(C.warrant){ $("warrantStatus").innerHTML=`<div class="note">Orden emitida contra <b>${esc(GANG.find(g=>g.id===C.warrant).name)}</b>.</div>`; return; }
+    if(["locked","briefing"].includes(C.status)){ $("warrantStatus").innerHTML=`<span class="muted">Se habilita al empezar la investigación.</span>`; return; }
+    $("warrantStatus").innerHTML = `<div class="row"><span>${m.length===1?`Coincide 1 sospechoso: <b>${esc(m[0].name)}</b>`:`Coinciden ${m.length} sospechosos`}</span>
+      <button class="btn primary" id="emitBtn" ${m.length===1?"":"disabled"}>Emitir orden</button></div>
+      <p class="small muted" style="margin:6px 0 0">Solo se emite con un único sospechoso. Ojo: si cargás un rasgo que no comprobaste, podés terminar con la orden equivocada.</p>`;
+    const eb=$("emitBtn"); if(eb) eb.onclick=()=>{ C.warrant=m[0].id; ev(`Orden de captura emitida contra ${m[0].name}.`); commit(); };
+  };
+  Object.keys(DIMS).forEach(k=>$("w_"+k).onchange=upd);
+  upd();
+}
+const QBANK = {};
+function indexQuestions(){
+  for(const c of Object.values(window.SIGNAL9_CASES)){ for(const d of c.destinations) QBANK[d.witness.id]=d.witness; if(c.finale) QBANK[c.finale.id]=c.finale; }
+}
+function renderRevancha(){
+  if(!S.revancha.length){ $("revancha").innerHTML=`<p class="small muted" style="margin:0">Sin cuentas pendientes. Las preguntas que falles vuelven acá, y más adelante aparecen en otros casos.</p>`; return; }
+  $("revancha").innerHTML=`<p class="small" style="margin-top:0">${S.revancha.length} pregunta(s) pendiente(s). Respondelas bien para sacarlas de la lista.</p>`+
+    S.revancha.map(id=>`<button class="btn" data-rev="${id}" style="margin:3px 4px 0 0">${esc(id)}</button>`).join("");
+  $("revancha").querySelectorAll("[data-rev]").forEach(b=>b.onclick=()=>openRevancha(b.dataset.rev));
+}
+function openRevancha(id){
+  const q=QBANK[id]; if(!q) return;
+  let state = q.type==="yesno" ? {sel:q.statements.map(()=>null),done:false} : null;
+  const draw=()=>{
+    const Q=question(q,(st,ok)=>{ state=st; if(ok===true){ S.revancha=S.revancha.filter(x=>x!==id); save(); } draw(); renderRevancha(); }, state);
+    $("modalBody").innerHTML=`<h2>Revancha · ${esc(id)}</h2>${Q.html}<div class="row" style="margin-top:12px"><button class="btn" id="closeModal">Cerrar</button></div>`;
+    Q.bind($("modalBody")); $("closeModal").onclick=()=>$("modal").classList.add("hidden");
+  };
+  draw(); $("modal").classList.remove("hidden");
+}
+function renderLog(){
+  $("log").innerHTML = C.events.length ? C.events.map(e=>`<div><span class="t">${String(e.t).padStart(2," ")} h</span>${esc(e.msg)}</div>`).join("") : `<div class="muted">Sin movimientos todavía.</div>`;
+}
+function renderHeader(){
+  $("caseTag").textContent=`Caso ${CASE.id} · ${CASE.title} · Mundo ${CASE.world}`;
+  $("clock").textContent=`${C.hours} h`; $("clock").classList.toggle("low", C.hours<=12);
+  const n=S.closed.filter(x=>x!=="000").length;
+  $("rank").textContent=`Rango: Novato · casos cerrados ${n}`;
+}
+function commit(){ save(); render(); }
+function render(){ renderHeader(); renderMap(); renderStage(); renderLights(); renderDossier(); renderWarrant(); renderRevancha(); renderLog(); }
+function resetCase(keepStart){
+  const started = keepStart && C.status!=="locked";
+  S.cases["001"] = freshCase(); C = S.cases["001"];
+  if(started){ C.status="briefing"; }
+}
+
+/* ============ Progreso ============ */
+$("exportBtn").onclick=()=>{
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:"application/json"}));
+  a.download="signal9-progress.json"; a.click();
+};
+$("importFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>{ const d=JSON.parse(t); if(d.v!==1) throw 0; S=d; C=S.cases["001"]||(S.cases["001"]=freshCase()); commit(); })
+    .catch(()=>alert("Ese archivo no es un progreso válido de SIGNAL 9."));
+};
+$("resetBtn").onclick=()=>{ if(confirm("¿Reiniciar el caso 001 desde cero? Se pierde el avance de este caso (la revancha se conserva).")){ resetCase(false); commit(); } };
+$("modal").onclick=e=>{ if(e.target.id==="modal") $("modal").classList.add("hidden"); };
+
+indexQuestions();
+render();
+</script>
+</body>
+</html>
